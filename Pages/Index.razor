@@ -1,0 +1,140 @@
+﻿@page "/"
+@inject PageTitleService pageTitle
+@inject GPIODeviceService gpio
+@inject LDRDeviceService ldr
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<div class="center grid" >
+
+    <div class="control-margin"
+         style="transform: scale(1);"
+    >
+        <div id="donut3"
+             data-role="donut"
+             data-value="0"
+             data-hole=".6"
+             data-stroke="#f5f5f5"
+             data-fill="#c9571a"
+             data-animate="5"
+             data-font-size="100"
+             class="mx-auto donut-large"
+        >
+        </div>
+
+        <button class="shortcut shortcut-large @LEDRedColor"
+                @onclick="LEDRedClick"
+        >
+            <span class="tag">
+                RED
+            </span>
+            <span class="caption">
+                @LEDRedPower
+            </span>
+            <span class="mif-settings-power icon">
+            </span>
+        </button>
+
+        <button class="shortcut shortcut-large @LEDYellowColor"
+                @onclick="LEDYellowClick">
+            <span class="tag">
+                YELLOW
+            </span>
+            <span class="caption">
+                @LEDYellowPower
+            </span>
+            <span class="mif-settings-power icon">
+            </span>
+        </button>
+    </div>
+
+</div>
+
+@code {
+    public PinValue LEDRedPower = PinValue.Low;
+    public string LEDRedColor = "";
+    public PinValue LEDYellowPower = PinValue.Low;
+    public string LEDYellowColor = "";
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        pageTitle.HeaderTitle = "Controls";   
+    }
+
+    private void CheckRedLED ()
+    {
+        if (gpio.LEDRedState == PinValue.Low)
+            LEDRedColor = "";
+        else
+            LEDRedColor = "alert";
+    }
+
+    public void LEDRedClick ()
+    {
+        Console.WriteLine("Change BLUE LED state");
+
+        if (gpio.LEDRedState == PinValue.Low)
+            gpio.LEDRedState = PinValue.High;
+        else
+            gpio.LEDRedState = PinValue.Low;
+
+        CheckRedLED();
+     }
+
+    private void CheckYellowLED ()
+    {
+        if (gpio.LEDYellowState == PinValue.Low)
+            LEDYellowColor = "";
+        else
+            LEDYellowColor = "yellow";
+    }
+
+    public void LEDYellowClick ()
+    {
+        Console.WriteLine("Change YELLOW LED state");
+        LEDYellowColor = "yellow";
+
+        if (gpio.LEDYellowState == PinValue.Low)
+            gpio.LEDYellowState = PinValue.High;
+        else
+            gpio.LEDYellowState = PinValue.Low;
+
+        CheckYellowLED();
+    }
+
+    // sync all instances
+    public async Task OnNotifyDataChanged()
+    {
+        await InvokeAsync(() =>
+        {
+            CheckRedLED();
+            CheckYellowLED();
+            StateHasChanged();
+        });
+    }
+
+    // update donut
+    public async Task OnNotifyDataChangedLDR()
+    {
+        await InvokeAsync(() =>
+        {
+            JSRuntime.InvokeVoidAsync("setDonut3", ldr.LevelPercentage);
+            StateHasChanged();
+        });
+    }
+
+    protected override void OnInitialized()
+    {
+        gpio.NotifyDataChanged += OnNotifyDataChanged;
+        ldr.NotifyDataChanged += OnNotifyDataChangedLDR;
+
+        CheckRedLED();
+        CheckYellowLED();
+    }
+
+    public void Dispose()
+    {
+        gpio.NotifyDataChanged -= OnNotifyDataChanged;
+        ldr.NotifyDataChanged -= OnNotifyDataChangedLDR;
+    }
+}

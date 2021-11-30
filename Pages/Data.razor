@@ -1,0 +1,51 @@
+@page "/data"
+@inject PageTitleService pageTitle
+@inject GPIODeviceService gpio
+@implements IDisposable
+
+<div class="scaled">
+    <h1>
+        Data
+    </h1>
+
+    <p style="font-size: xx-large;">
+        Current count: @currentCount
+    </p>
+    <br>
+
+    <button class="button"
+            @onclick="IncrementCount"
+            style="font-size: xx-large;"
+    >
+        Click me
+    </button>
+</div>
+
+@code {
+    private int currentCount = 0;
+
+    protected override void OnInitialized()
+    {
+        pageTitle.HeaderTitle = "Data";
+        gpio.NotifyPushButtonPressed += OnPushButtonPressed;
+    }
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+
+    public async Task OnPushButtonPressed()
+    {
+        await InvokeAsync(() =>
+        {
+            currentCount++;
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        gpio.NotifyPushButtonPressed -= OnPushButtonPressed;
+    }
+}
