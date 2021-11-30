@@ -1,0 +1,38 @@
+﻿@inherits LayoutComponentBase
+@inject PageTitleService pageTitle
+@implements IDisposable 
+
+<div class="sidebar">
+    <NavMenu />
+</div>
+
+<div class="main">
+    <div class="top-row px-4">
+        @pageTitle.HeaderTitle
+    </div>
+
+    <div class="content px-4">
+        @Body
+    </div>
+</div>
+
+@code {
+
+    public async Task OnNotifyDataChanged()
+    {
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+    protected override void OnInitialized()
+    {
+        pageTitle.NotifyDataChanged += OnNotifyDataChanged;
+    }
+
+    public void Dispose()
+    {
+        pageTitle.NotifyDataChanged -= OnNotifyDataChanged;
+    }
+}
